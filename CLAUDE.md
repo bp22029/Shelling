@@ -22,6 +22,22 @@
 | `run.py` | エントリポイント。`python run.py {rule,calib,no_pref,numeric,verbal}`。 |
 | `test_connection.py` / `inference_test.py` | サーバー接続・推論の動作確認。 |
 
+## 環境構築（conda）
+
+このプロジェクトは conda 環境（名前: `schelling`）を使う。定義は `environment.yml`。
+
+```bash
+conda env create -f environment.yml   # 初回作成
+conda activate schelling              # 有効化
+conda env update -f environment.yml --prune   # 依存を変えたとき
+```
+
+依存パッケージを追加・変更したら `environment.yml` を更新すること
+（`requirements.txt` は pip 利用者向けに残してあるので、合わせて更新する）。
+
+VS Code では `Ctrl+Shift+P` →「Python: Select Interpreter」で conda 環境
+`schelling` を選ぶと、▶ ボタン実行もこの環境を使う。
+
 ## 実行方法
 
 ### VS Code でボタン起動（推奨・引数入力不要）

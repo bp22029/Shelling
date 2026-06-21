@@ -1,0 +1,16 @@
+# conda 環境定義。
+#   作成:   conda env create -f environment.yml
+#   有効化: conda activate schelling
+#   更新:   conda env update -f environment.yml --prune
+name: schelling
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - numpy>=1.24
+  - matplotlib>=3.7
+  # openai / python-dotenv は pip 経由（最新版を確実に入れるため）
+  - pip
+  - pip:
+      - openai>=1.0.0
+      - python-dotenv>=1.0.0
