@@ -1,3 +1,7 @@
 # ===== 秘密情報 =====
 .env
 .env.example
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
