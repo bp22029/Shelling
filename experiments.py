@@ -15,6 +15,9 @@ from decision import (
     RuleFixedDecision, RuleHeterogeneousDecision, LLMDecision,
 )
 from viz import plot_initial_final, plot_metrics
+from results_io import (
+    save_metrics_csv, save_calibration_csv, save_trials_csv, figure_path,
+)
 
 
 LLM_LABELS = {
@@ -24,7 +27,20 @@ LLM_LABELS = {
 }
 
 
-def calibrate_llm(llm_client, mode="verbal"):
+def _emit_outputs(logs, label, title_prefix, show=True, save=True):
+    """数値CSV（results/）と可視化PNG（figures/）を保存しつつ、必要なら表示する。"""
+    if save:
+        save_metrics_csv(logs, label)
+    if show or save:
+        plot_initial_final(logs, title_prefix,
+                           save_path=figure_path(label, "grid") if save else None,
+                           show=show)
+        plot_metrics(logs,
+                     save_path=figure_path(label, "metrics") if save else None,
+                     show=show)
+
+
+def calibrate_llm(llm_client, mode="verbal", save=True):
     """周囲構成を変えながらLLMの判断を確認。"""
     decision_maker = LLMDecision(llm_client, mode=mode)
     results = {}
@@ -44,32 +60,33 @@ def calibrate_llm(llm_client, mode="verbal"):
             )
             results[pref].append((same, diff, ratio, decision))
             print(f"{same:>5} {diff:>5} {ratio:>7.3f} -> {decision:>10}")
+    if save:
+        save_calibration_csv(results, mode)
     return results
 
 
-def run_rule_fixed_demo(size=10, max_steps=30, seed=42, show=True):
-    print("\n========= Experiment 0: Rule-Fixed =========")
+def run_rule_fixed_demo(size=10, max_steps=30, seed=42, show=True, save=True):
+    label = "Experiment 0: Rule-Fixed"
+    print(f"\n========= {label} =========")
     grid = SchellingGrid(size=size, empty_rate=0.2, ratio_a=0.5, seed=seed)
     decision = RuleFixedDecision(similar_wanted=0.30)
     logs = run_simulation(grid, decision, max_steps=max_steps, seed=seed)
-    if show:
-        plot_initial_final(logs, "Rule-Fixed")
-        plot_metrics(logs)
+    _emit_outputs(logs, label, "Rule-Fixed", show=show, save=save)
     return logs
 
 
-def run_rule_hetero_demo(size=10, max_steps=30, seed=42, show=True):
-    print("\n========= Experiment 4: Rule-Heterogeneous =========")
+def run_rule_hetero_demo(size=10, max_steps=30, seed=42, show=True, save=True):
+    label = "Experiment 4: Rule-Heterogeneous"
+    print(f"\n========= {label} =========")
     grid = SchellingGrid(size=size, empty_rate=0.2, ratio_a=0.5, seed=seed)
     decision = RuleHeterogeneousDecision(low=0.25, mid=0.40, high=0.55)
     logs = run_simulation(grid, decision, max_steps=max_steps, seed=seed)
-    if show:
-        plot_initial_final(logs, "Rule-Heterogeneous")
-        plot_metrics(logs)
+    _emit_outputs(logs, label, "Rule-Heterogeneous", show=show, save=save)
     return logs
 
 
-def run_llm_demo(llm_client, mode="verbal", size=10, max_steps=10, seed=42, show=True):
+def run_llm_demo(llm_client, mode="verbal", size=10, max_steps=10, seed=42,
+                 show=True, save=True):
     label = LLM_LABELS[mode]
     print(f"\n========= {label} =========")
     grid = SchellingGrid(size=size, empty_rate=0.2, ratio_a=0.5, seed=seed)
@@ -79,14 +96,12 @@ def run_llm_demo(llm_client, mode="verbal", size=10, max_steps=10, seed=42, show
     elapsed = time.time() - t0
     print(f"\nElapsed: {elapsed:.1f}s")
     print(f"LLM calls: {decision.call_count}, errors: {decision.error_count}")
-    if show:
-        plot_initial_final(logs, label)
-        plot_metrics(logs)
+    _emit_outputs(logs, label, label, show=show, save=save)
     return logs
 
 
 def run_trials(make_decision, n_trials=5, size=10, max_steps=10,
-               grid_seed=42, sim_seed=42):
+               grid_seed=42, sim_seed=42, save=True, label="trials"):
     """同一条件をN回実行し、最終avg_same_ratioのリストと全logsを返す。
 
     grid_seed / sim_seed を固定すれば、試行間のばらつきはLLMの確率性（temperature>0）に由来する。
@@ -104,4 +119,6 @@ def run_trials(make_decision, n_trials=5, size=10, max_steps=10,
     if finals:
         import numpy as np
         print(f"--- mean={np.mean(finals):.3f}, std={np.std(finals):.3f} (n={n_trials})")
+    if save and finals:
+        save_trials_csv(finals, label)
     return finals, all_logs

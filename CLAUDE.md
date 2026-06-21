@@ -18,7 +18,8 @@
 | `decision.py` | 意思決定器。`RuleFixedDecision` / `RuleHeterogeneousDecision` / `LLMDecision`。 |
 | `experiments.py` | 実験定義（Exp0〜4）・キャリブレーション・複数試行の集計。 |
 | `llm_client.py` | LLM クライアント群（`HTTPLLMClient` / `DummyLLMClient` / `LocalLLMClient`）。 |
-| `viz.py` | 可視化（初期/最終配置・メトリクス）。 |
+| `viz.py` | 可視化（初期/最終配置・メトリクス）。`save_path` 指定で PNG 保存。 |
+| `results_io.py` | 結果の保存先管理。`figures/` に PNG、`results/` に CSV（メトリクス・キャリブレーション・試行集計）。 |
 | `run.py` | エントリポイント。`python run.py {rule,calib,no_pref,numeric,verbal}`。 |
 | `test_connection.py` / `inference_test.py` | サーバー接続・推論の動作確認。 |
 
