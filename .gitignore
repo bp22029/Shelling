@@ -6,3 +6,7 @@
 # ===== Python =====
 __pycache__/
 *.py[cod]
+
+# ===== 仮想環境 =====
+.venv/
+venv/
