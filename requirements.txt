@@ -1,0 +1,6 @@
+openai>=1.0.0
+python-dotenv>=1.0.0
+numpy>=1.24
+matplotlib>=3.7
+# ノートブックでアニメーション(animate_logs)を使う場合のみ:
+# ipython
