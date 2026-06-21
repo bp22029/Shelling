@@ -8,8 +8,8 @@ from dataclasses import dataclass
 import numpy as np
 
 EMPTY = 0
-TEAM_A = 1
-TEAM_B = 2
+TYPE_A = 1
+TYPE_B = 2
 
 # 選好タイプ（LLM-Verbal と Rule-Hetero で共通の割り当てに使う）
 PREF_LOW = "low"
@@ -19,8 +19,8 @@ PREF_HIGH = "high"
 
 @dataclass
 class Agent:
-    """1エージェントの状態。位置は格子側で管理するのでteamと選好のみ。"""
-    team: int
+    """1エージェントの状態。位置は格子側で管理するのでタイプと選好のみ。"""
+    agent_type: int
     preference: str = PREF_MID
 
 
@@ -38,7 +38,7 @@ class SchellingGrid:
         n_a = int(n_agent * ratio_a)
         n_b = n_agent - n_a
 
-        cells = [TEAM_A] * n_a + [TEAM_B] * n_b + [EMPTY] * n_empty
+        cells = [TYPE_A] * n_a + [TYPE_B] * n_b + [EMPTY] * n_empty
         rng.shuffle(cells)
         self.grid = np.array(cells).reshape(size, size)
 
@@ -59,7 +59,7 @@ class SchellingGrid:
     def neighbors(self, r, c):
         """Moore近傍（周囲8マス）を返す。端は折り返しなし。"""
         same, diff, empty = 0, 0, 0
-        my_team = self.grid[r, c]
+        my_type = self.grid[r, c]
         for dr in (-1, 0, 1):
             for dc in (-1, 0, 1):
                 if dr == 0 and dc == 0:
@@ -69,7 +69,7 @@ class SchellingGrid:
                     cell = self.grid[nr, nc]
                     if cell == EMPTY:
                         empty += 1
-                    elif cell == my_team:
+                    elif cell == my_type:
                         same += 1
                     else:
                         diff += 1
@@ -132,11 +132,11 @@ def run_simulation(grid, decision_maker, max_steps=30, seed=42, verbose=True):
             r, c = pos
             if grid.grid[r, c] == EMPTY:  # この回で空になっている場合
                 continue
-            team = grid.grid[r, c]
+            agent_type = grid.grid[r, c]
             same, diff, empty = grid.neighbors(r, c)
             pref = grid.preferences.get(pos, PREF_MID)
 
-            decision = decision_maker.decide(team, same, diff, empty, pref)
+            decision = decision_maker.decide(agent_type, same, diff, empty, pref)
             if decision == "move":
                 unsatisfied += 1
                 empties = grid.empty_cells()
