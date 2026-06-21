@@ -24,6 +24,20 @@
 
 ## 実行方法
 
+### VS Code でボタン起動（推奨・引数入力不要）
+
+「実行とデバッグ」パネル（`Ctrl+Shift+D`）左上のドロップダウンで実験を選び、緑の ▶ ボタン（または `F5`）を押すだけ。構成は `.vscode/launch.json` に定義済み。
+
+- `Exp0+4: Rule (LLM不要)`
+- `Calibration (verbal / 要サーバー)`
+- `Exp1: LLM No-Preference (要サーバー)`
+- `Exp2: LLM Numeric (要サーバー)`
+- `Exp3: LLM Verbal (要サーバー)`
+
+新しい実験を追加したら `.vscode/launch.json` にも構成を1つ追加すること。
+
+### コマンドライン
+
 ```bash
 # LLM 不要（サーバー無しで動作確認できる）
 python run.py rule
