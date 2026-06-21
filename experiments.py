@@ -9,7 +9,7 @@
 import time
 
 from schelling_core import (
-    SchellingGrid, run_simulation, TEAM_A, PREF_LOW, PREF_MID, PREF_HIGH,
+    SchellingGrid, run_simulation, TYPE_A, PREF_LOW, PREF_MID, PREF_HIGH,
 )
 from decision import (
     RuleFixedDecision, RuleHeterogeneousDecision, LLMDecision,
@@ -40,7 +40,7 @@ def calibrate_llm(llm_client, mode="verbal"):
             total = same + diff
             ratio = same / total if total > 0 else 0
             decision = decision_maker.decide(
-                team=TEAM_A, same=same, diff=diff, empty=0, preference=pref
+                agent_type=TYPE_A, same=same, diff=diff, empty=0, preference=pref
             )
             results[pref].append((same, diff, ratio, decision))
             print(f"{same:>5} {diff:>5} {ratio:>7.3f} -> {decision:>10}")
