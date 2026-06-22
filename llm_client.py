@@ -3,8 +3,9 @@
 ノートブックの LLMClient(ABC) インターフェース（generate(prompt) -> str）を
 維持しつつ、研究室サーバー(oMLX / OpenAI互換)に接続する HTTPLLMClient を主役にする。
 
-- HTTPLLMClient : 本実験用。oMLX へHTTPで推論。decide() 側が <think> を除去するため、
-                  thinking のオン/オフどちらでも動く。
+- HTTPLLMClient : 本実験用。oMLX へHTTPで推論。thinking は既定でオン。
+                  decide() 側が最後に現れた stay/move を結論として拾うため、
+                  思考過程が本文に出ても判定できる。
 - DummyLLMClient: LLMなしで判定器やシミュレーションの流れを確認する用。
 - LocalLLMClient: Colab等でローカルGPU推論する場合の代替（transformersを遅延import）。
 
@@ -38,8 +39,8 @@ class HTTPLLMClient(LLMClient):
 
     temperature は再現性を厳密に固定する必要がないため既定 0.7。
     複数回実行して傾向として再現性を見る運用に合わせている。
-    enable_thinking=False のときは Qwen3 の "/no_think" を付与して思考を抑制する
-    （oMLXのモデル設定側でthinking制御している場合は影響しない）。
+    thinking は既定でオン（enable_thinking=True）。明示的に False にしたときだけ
+    Qwen3 の "/no_think" を付与する（oMLX 側設定で thinking 制御している場合は無効）。
     """
 
     def __init__(
@@ -48,8 +49,8 @@ class HTTPLLMClient(LLMClient):
         api_key: str | None = None,
         model: str | None = None,
         temperature: float = 0.7,
-        max_tokens: int = 512,
-        enable_thinking: bool = False,
+        max_tokens: int = 2048,  # thinking が結論まで到達できるよう十分に確保
+        enable_thinking: bool = True,
     ):
         self.base_url = base_url or os.environ["LLM_BASE_URL"]
         self.api_key = api_key or os.environ["LLM_API_KEY"]
@@ -98,7 +99,7 @@ class LocalLLMClient(LLMClient):
     """Colab等でローカルGPU推論する場合の代替（研究室サーバー利用時は不要）。"""
 
     def __init__(self, model_name: str = "Qwen/Qwen3-4B",
-                 max_new_tokens: int = 10, enable_thinking: bool = False):
+                 max_new_tokens: int = 1024, enable_thinking: bool = True):
         import torch
         from transformers import AutoTokenizer, AutoModelForCausalLM
         self._torch = torch

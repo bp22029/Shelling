@@ -14,6 +14,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 FIGURES_DIR = BASE_DIR / "figures"
 RESULTS_DIR = BASE_DIR / "results"
+PARSE_FAIL_LOG = RESULTS_DIR / "llm_parse_failures.log"
 
 
 def _slug(name):
@@ -57,6 +58,23 @@ def save_calibration_csv(results, mode):
                 writer.writerow([pref, same, diff, f"{ratio:.6f}", decision])
     print(f"[saved] {path}")
     return path
+
+
+def log_llm_parse_failure(model, mode, prompt, raw):
+    """FINAL も最終行も判定できなかった LLM 応答の本文をログに追記する。
+
+    どのモデル・どのモードで、どんなプロンプトにどう応答して判定不能になったかを
+    後から確認できるようにする。実行をまたいで追記される（不要になったら削除可）。
+    """
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    with open(PARSE_FAIL_LOG, "a", encoding="utf-8") as f:
+        f.write("=" * 72 + "\n")
+        f.write(f"model={model}  mode={mode}\n")
+        f.write("--- prompt ---\n")
+        f.write(f"{(prompt or '').rstrip()}\n")
+        f.write("--- raw response ---\n")
+        f.write(f"{(raw or '').rstrip()}\n\n")
+    return PARSE_FAIL_LOG
 
 
 def save_trials_csv(finals, experiment):
