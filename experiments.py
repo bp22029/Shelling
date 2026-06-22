@@ -65,7 +65,7 @@ def calibrate_llm(llm_client, mode="verbal", save=True):
     return results
 
 
-def run_rule_fixed_demo(size=10, max_steps=30, seed=42, show=True, save=True):
+def run_rule_fixed_demo(size=10, max_steps=30, seed=42, show=False, save=True):
     label = "Experiment 0: Rule-Fixed"
     print(f"\n========= {label} =========")
     grid = SchellingGrid(size=size, empty_rate=0.2, ratio_a=0.5, seed=seed)
@@ -75,7 +75,7 @@ def run_rule_fixed_demo(size=10, max_steps=30, seed=42, show=True, save=True):
     return logs
 
 
-def run_rule_hetero_demo(size=10, max_steps=30, seed=42, show=True, save=True):
+def run_rule_hetero_demo(size=10, max_steps=30, seed=42, show=False, save=True):
     label = "Experiment 4: Rule-Heterogeneous"
     print(f"\n========= {label} =========")
     grid = SchellingGrid(size=size, empty_rate=0.2, ratio_a=0.5, seed=seed)
@@ -86,7 +86,7 @@ def run_rule_hetero_demo(size=10, max_steps=30, seed=42, show=True, save=True):
 
 
 def run_llm_demo(llm_client, mode="verbal", size=10, max_steps=10, seed=42,
-                 show=True, save=True, progress_every=10):
+                 show=False, save=True, progress_every=10):
     label = LLM_LABELS[mode]
     print(f"\n========= {label} =========")
     grid = SchellingGrid(size=size, empty_rate=0.2, ratio_a=0.5, seed=seed)
