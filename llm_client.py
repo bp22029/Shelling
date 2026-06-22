@@ -49,7 +49,8 @@ class HTTPLLMClient(LLMClient):
         api_key: str | None = None,
         model: str | None = None,
         temperature: float = 0.7,
-        max_tokens: int = 2048,  # thinking が結論まで到達できるよう十分に確保
+        max_tokens: int = 4096,  # thinking が結論まで到達できるよう十分に確保
+                                  # （特に閾値を与えない no_pref は推論が長くなりやすい）
         enable_thinking: bool = True,
     ):
         self.base_url = base_url or os.environ["LLM_BASE_URL"]
