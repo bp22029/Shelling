@@ -23,20 +23,32 @@ def _slug(name):
     return s.strip("_")
 
 
-def figure_path(experiment, kind):
+def _stem(experiment, model=None):
+    """実験名（＋モデル名）からファイル名の語幹を作る。
+
+    model を渡すと experiment__model の形にし、モデルを変えて再実行しても
+    結果が上書きされず並存するようにする。
+    """
+    name = _slug(experiment)
+    if model:
+        name = f"{name}__{_slug(model)}"
+    return name
+
+
+def figure_path(experiment, kind, model=None):
     """可視化PNGの保存パス。kind は 'grid' / 'metrics' など。"""
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    return FIGURES_DIR / f"{_slug(experiment)}_{kind}.png"
+    return FIGURES_DIR / f"{_stem(experiment, model)}_{kind}.png"
 
 
-def _results_path(experiment, suffix):
+def _results_path(experiment, suffix, model=None):
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    return RESULTS_DIR / f"{_slug(experiment)}_{suffix}.csv"
+    return RESULTS_DIR / f"{_stem(experiment, model)}_{suffix}.csv"
 
 
-def save_metrics_csv(logs, experiment):
+def save_metrics_csv(logs, experiment, model=None):
     """各ステップのメトリクスをCSVに保存する。"""
-    path = _results_path(experiment, "metrics")
+    path = _results_path(experiment, "metrics", model)
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["step", "unsatisfied", "moves", "avg_same_ratio"])
@@ -47,9 +59,9 @@ def save_metrics_csv(logs, experiment):
     return path
 
 
-def save_calibration_csv(results, mode):
+def save_calibration_csv(results, mode, model=None):
     """calibrate_llm の結果（pref -> [(same, diff, ratio, decision), ...]）を保存。"""
-    path = _results_path(f"calibration_{mode}", "calibration")
+    path = _results_path(f"calibration_{mode}", "calibration", model)
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["preference", "same", "diff", "ratio", "decision"])
@@ -77,9 +89,9 @@ def log_llm_parse_failure(model, mode, prompt, raw):
     return PARSE_FAIL_LOG
 
 
-def save_trials_csv(finals, experiment):
+def save_trials_csv(finals, experiment, model=None):
     """run_trials の最終分居度リストを試行番号付きで保存。"""
-    path = _results_path(experiment, "trials")
+    path = _results_path(experiment, "trials", model)
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["trial", "final_avg_same_ratio"])

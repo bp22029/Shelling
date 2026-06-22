@@ -24,10 +24,12 @@ def plot_grid(grid_array, title="Schelling", ax=None):
     return ax
 
 
-def plot_initial_final(logs, title_prefix="", save_path=None, show=True):
+def plot_initial_final(logs, title_prefix="", save_path=None, show=True, caption=None):
     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
     plot_grid(logs[0].grid_snapshot, f"{title_prefix} Step 0", ax=axes[0])
     plot_grid(logs[-1].grid_snapshot, f"{title_prefix} Step {logs[-1].step}", ax=axes[1])
+    if caption:
+        fig.suptitle(caption, fontsize=10)
     plt.tight_layout()
     if save_path is not None:
         fig.savefig(save_path, dpi=150, bbox_inches="tight")
@@ -37,7 +39,7 @@ def plot_initial_final(logs, title_prefix="", save_path=None, show=True):
     plt.close(fig)
 
 
-def plot_metrics(logs, save_path=None, show=True):
+def plot_metrics(logs, save_path=None, show=True, caption=None):
     steps = [l.step for l in logs]
     unsat = [l.unsatisfied for l in logs]
     ratio = [l.avg_same_ratio for l in logs]
@@ -55,6 +57,8 @@ def plot_metrics(logs, save_path=None, show=True):
     axes[1].set_title("Segregation degree")
     axes[1].grid(True, alpha=0.3)
 
+    if caption:
+        fig.suptitle(caption, fontsize=10)
     plt.tight_layout()
     if save_path is not None:
         fig.savefig(save_path, dpi=150, bbox_inches="tight")

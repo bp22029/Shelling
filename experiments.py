@@ -27,26 +27,39 @@ LLM_LABELS = {
 }
 
 
-def _emit_outputs(logs, label, title_prefix, show=True, save=True):
-    """数値CSV（results/）と可視化PNG（figures/）を保存しつつ、必要なら表示する。"""
+def model_label(llm_client):
+    """LLMクライアントから表示用のモデル名を取り出す（無ければクラス名）。"""
+    return (getattr(llm_client, "model", None)
+            or getattr(llm_client, "model_name", None)
+            or type(llm_client).__name__)
+
+
+def _emit_outputs(logs, label, title_prefix, show=True, save=True, model=None):
+    """数値CSV（results/）と可視化PNG（figures/）を保存しつつ、必要なら表示する。
+
+    model を渡すと、ファイル名（モデル別保存）と図のキャプションにモデル名を含める。
+    """
+    caption = f"model: {model}" if model else None
     if save:
-        save_metrics_csv(logs, label)
+        save_metrics_csv(logs, label, model=model)
     if show or save:
         plot_initial_final(logs, title_prefix,
-                           save_path=figure_path(label, "grid") if save else None,
-                           show=show)
+                           save_path=figure_path(label, "grid", model) if save else None,
+                           show=show, caption=caption)
         plot_metrics(logs,
-                     save_path=figure_path(label, "metrics") if save else None,
-                     show=show)
+                     save_path=figure_path(label, "metrics", model) if save else None,
+                     show=show, caption=caption)
 
 
 def calibrate_llm(llm_client, mode="verbal", save=True):
     """周囲構成を変えながらLLMの判断を確認。"""
     decision_maker = LLMDecision(llm_client, mode=mode)
+    model = model_label(llm_client)
     results = {}
     prefs_to_test = [PREF_LOW, PREF_MID, PREF_HIGH] if mode == "verbal" else [PREF_MID]
 
     print(f"=== LLM Calibration (mode={mode}) ===")
+    print(f"接続モデル: {model}", flush=True)
     for pref in prefs_to_test:
         print(f"\n[preference: {pref}]")
         print(f"{'same':>5} {'diff':>5} {'ratio':>7} -> {'decision':>10}")
@@ -61,7 +74,7 @@ def calibrate_llm(llm_client, mode="verbal", save=True):
             results[pref].append((same, diff, ratio, decision))
             print(f"{same:>5} {diff:>5} {ratio:>7.3f} -> {decision:>10}")
     if save:
-        save_calibration_csv(results, mode)
+        save_calibration_csv(results, mode, model=model)
     return results
 
 
@@ -88,7 +101,9 @@ def run_rule_hetero_demo(size=10, max_steps=30, seed=42, show=False, save=True):
 def run_llm_demo(llm_client, mode="verbal", size=10, max_steps=10, seed=42,
                  show=False, save=True, progress_every=10):
     label = LLM_LABELS[mode]
+    model = model_label(llm_client)
     print(f"\n========= {label} =========")
+    print(f"接続モデル: {model}", flush=True)
     grid = SchellingGrid(size=size, empty_rate=0.2, ratio_a=0.5, seed=seed)
     n_agents = len(grid.agent_positions())
     print(f"格子 {size}x{size} / エージェント {n_agents}体 / max_steps={max_steps}")
@@ -101,7 +116,7 @@ def run_llm_demo(llm_client, mode="verbal", size=10, max_steps=10, seed=42,
     elapsed = time.time() - t0
     print(f"\nElapsed: {elapsed:.1f}s")
     print(f"LLM calls: {decision.call_count}, errors: {decision.error_count}")
-    _emit_outputs(logs, label, label, show=show, save=save)
+    _emit_outputs(logs, label, label, show=show, save=save, model=model)
     return logs
 
 
