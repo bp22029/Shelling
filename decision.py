@@ -8,6 +8,7 @@ import re
 from abc import ABC, abstractmethod
 
 from schelling_core import TYPE_A, PREF_LOW, PREF_MID, PREF_HIGH
+from results_io import log_llm_parse_failure
 
 
 class DecisionMaker(ABC):
@@ -64,7 +65,8 @@ class LLMDecision(DecisionMaker):
             f"- 空き地: {empty}つ\n\n"
             f"あなたは現在の場所に住み続けますか。\n"
             f"それとも移動しますか。\n\n"
-            f"必ず stay または move のどちらかだけで答えてください。"
+            f"じっくり考えてかまいません。ただし回答の最後の行に必ず、\n"
+            f"「FINAL: stay」または「FINAL: move」の形式で結論だけを書いてください。"
         )
 
         if self.mode == "no_pref":
@@ -98,16 +100,29 @@ class LLMDecision(DecisionMaker):
     def decide(self, agent_type, same, diff, empty, preference):
         prompt = self.build_prompt(agent_type, same, diff, empty, preference)
         self.call_count += 1
-        raw_output = self.llm.generate(prompt)
+        raw_output = self.llm.generate(prompt) or ""
 
-        # thinking ブロックを除去してから判定（thinkingオン/オフどちらでも安全）
-        answer_part = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL)
-        answer_part = answer_part.strip().lower()
+        # <think>...</think> タグがあれば除去（閉じタグがある場合のみ効く）。
+        text = re.sub(r"<think>.*?</think>", "", raw_output, flags=re.DOTALL).lower()
 
-        if "stay" in answer_part and "move" not in answer_part:
-            return "stay"
-        elif "move" in answer_part and "stay" not in answer_part:
-            return "move"
-        else:
-            self.error_count += 1
-            return "stay"
+        # 「FINAL: stay/move」形式の結論を最優先で拾う（最後のものを採用）。
+        marks = re.findall(r"final\s*[:：]\s*(stay|move)", text)
+        if marks:
+            return marks[-1]
+
+        # マーカーが無い場合のフォールバック: 結論行（最終非空行）だけを見る。
+        # 思考途中の stay/move を拾わないよう、全文スキャンはしない。
+        lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+        if lines:
+            last = lines[-1]
+            if "stay" in last and "move" not in last:
+                return "stay"
+            if "move" in last and "stay" not in last:
+                return "move"
+
+        # ここに来るのは形式不履行 or 出力が途中で切れた（max_tokens不足）場合。
+        # 誤判定を避けるためエラー扱いにし、本文をログへ残す（後から原因を追える）。
+        self.error_count += 1
+        model = getattr(self.llm, "model", type(self.llm).__name__)
+        log_llm_parse_failure(model, self.mode, prompt, raw_output)
+        return "stay"
