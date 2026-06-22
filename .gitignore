@@ -17,3 +17,6 @@ figures/*
 results/*
 !figures/.gitkeep
 !results/.gitkeep
+
+# ===== その他 =====
+.claude
