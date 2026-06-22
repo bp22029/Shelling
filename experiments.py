@@ -86,13 +86,18 @@ def run_rule_hetero_demo(size=10, max_steps=30, seed=42, show=True, save=True):
 
 
 def run_llm_demo(llm_client, mode="verbal", size=10, max_steps=10, seed=42,
-                 show=True, save=True):
+                 show=True, save=True, progress_every=10):
     label = LLM_LABELS[mode]
     print(f"\n========= {label} =========")
     grid = SchellingGrid(size=size, empty_rate=0.2, ratio_a=0.5, seed=seed)
+    n_agents = len(grid.agent_positions())
+    print(f"格子 {size}x{size} / エージェント {n_agents}体 / max_steps={max_steps}")
+    print(f"→ LLM呼び出しは最大 約 {n_agents * max_steps} 回。"
+          f"途中経過は {progress_every} 体ごとに表示します。", flush=True)
     decision = LLMDecision(llm_client, mode=mode)
     t0 = time.time()
-    logs = run_simulation(grid, decision, max_steps=max_steps, seed=seed)
+    logs = run_simulation(grid, decision, max_steps=max_steps, seed=seed,
+                          progress_every=progress_every)
     elapsed = time.time() - t0
     print(f"\nElapsed: {elapsed:.1f}s")
     print(f"LLM calls: {decision.call_count}, errors: {decision.error_count}")
